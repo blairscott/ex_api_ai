@@ -25,6 +25,16 @@ defmodule EntityTest do
     end
   end
 
+  test "should report an error if unauthorized", %{entity: entity} do
+    client = Client.new(%{developer_access_token: "aint-gonna-work"})
+    use_cassette "get_entity_unauthorized" do
+      {:error, response} = Entity.get(client, entity)
+
+      assert response["status"]["code"] == 401
+      assert response["status"]["errorType"] == "unauthorized"
+    end
+  end
+
   test "should create the entries on an entity", %{client: client, entity: entity} do
     use_cassette "create_entity_entries" do
       entries = [
@@ -84,4 +94,5 @@ defmodule EntityTest do
       assert response["status"]["code"] == 200
     end
   end
+
 end

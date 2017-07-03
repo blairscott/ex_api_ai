@@ -39,6 +39,12 @@ defmodule ApiAi.Client do
   defp access_token(%__MODULE__{} = client, "/query"), do: client.client_access_token
   defp access_token(%__MODULE__{} = client, _path), do: client.developer_access_token
 
-  defp handle_apiai_response({:ok, response}), do: {:ok, response.body |> Poison.Parser.parse! }
+  defp handle_apiai_response({:ok, response}), do: response.body |> Poison.Parser.parse!() |> handle_apiai_json_response()
   defp handle_apiai_response({:error, response}), do: {:error, response}
+
+  # Kind of ugly, but only some of the responses include the "status" object, so if it's there, we check for a non-2XX value.
+  defp handle_apiai_json_response(%{"status" => %{"code" => status_code}} = response) when status_code < 200 or status_code >= 300 do
+    {:error, response}
+  end
+  defp handle_apiai_json_response(%{} = response), do: {:ok, response}
 end
